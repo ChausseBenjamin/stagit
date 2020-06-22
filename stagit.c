@@ -352,12 +352,12 @@ writeheader(FILE *fp, const char *title)
 	if (description[0])
 		fputs(" - ", fp);
 	xmlencode(fp, description, strlen(description));
-	fprintf(fp, "</title>\n<link rel=\"icon\" type=\"image/png\" href=\"%sfavicon.ico\" />\n", relpath);
+	fprintf(fp, "</title>\n<link rel=\"icon\" type=\"image/png\" href=\"../%sfavicon.ico\" />\n", relpath);
 	fprintf(fp, "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"%s Atom Feed\" href=\"%satom.xml\" />\n",
 		name, relpath);
-	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"%sstyle.css\" />\n", relpath);
+	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"../%sstyle.css\" />\n", relpath);
 	fputs("</head>\n<body>\n<table><tr><td>", fp);
-	fprintf(fp, "<a href=\"../%s\"><img src=\"%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></a>",
+	fprintf(fp, "<a href=\"../%s\"><img src=\"../%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></a>",
 	        relpath, relpath);
 	fputs("</td><td><h1>", fp);
 	xmlencode(fp, strippedname, strlen(strippedname));

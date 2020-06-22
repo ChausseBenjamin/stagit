@@ -14,60 +14,56 @@ export LC_CTYPE="en_US.UTF-8"
 
 name="$1"
 if test "${name}" = ""; then
-	name=$(basename "$(pwd)")
+    name=$(basename "$(pwd)")
 fi
 
-# config
-# paths must be absolute.
-reposdir="/home/src/src"
+# paths must be absolute
+reposdir="/srv/git"
 dir="${reposdir}/${name}"
-htmldir="/home/www/domains/git.codemadness.org/htdocs"
-stagitdir="/"
-destdir="${htmldir}${stagitdir}"
-cachefile=".htmlcache"
-# /config
+destdir="/srv/git/html"
+cachefile=".stagit-build-cache"
 
 if ! test -d "${dir}"; then
-	echo "${dir} does not exist" >&2
-	exit 1
+    echo "${dir} does not exist" >&2
+    exit 1
 fi
 cd "${dir}" || exit 1
+
+[ -f "${dir}/git-daemon-export-ok" ] || exit 0
 
 # detect git push -f
 force=0
 while read -r old new ref; do
-	test "${old}" = "0000000000000000000000000000000000000000" && continue
-	test "${new}" = "0000000000000000000000000000000000000000" && continue
+    test "${old}" = "0000000000000000000000000000000000000000" && continue
+    test "${new}" = "0000000000000000000000000000000000000000" && continue
 
-	hasrevs=$(git rev-list "${old}" "^${new}" | sed 1q)
-	if test -n "${hasrevs}"; then
-		force=1
-		break
-	fi
+    hasrevs=$(git rev-list "${old}" "^${new}" | sed 1q)
+    if test -n "${hasrevs}"; then
+        force=1
+        break
+    fi
 done
 
-# strip .git suffix.
+# strip .git suffix
 r=$(basename "${name}")
 d=$(basename "${name}" ".git")
 printf "[%s] stagit HTML pages... " "${d}"
 
+# remove folder if forced update
+[ "${force}" = "1" ] && printf "forced update... " && rm -rf "${destdir}/${d}"
+
 mkdir -p "${destdir}/${d}"
 cd "${destdir}/${d}" || exit 1
 
-# remove commits and ${cachefile} on git push -f, this recreated later on.
-if test "${force}" = "1"; then
-	rm -f "${cachefile}"
-	rm -rf "commit"
-fi
-
-# make index.
-stagit-index "${reposdir}/"*/ > "${destdir}/index.html"
-
-# make pages.
+# make pages
 stagit -c "${cachefile}" "${reposdir}/${r}"
-
 ln -sf log.html index.html
-ln -sf ../style.css style.css
-ln -sf ../logo.png logo.png
+
+# make index
+repos=""
+for dir in "$reposdir/"*.git/; do
+    [ -f "$dir/git-daemon-export-ok" ] && repos="$repos $dir"
+done
+echo "$repos" | xargs stagit-index > "${destdir}/index.html"
 
 echo "done"

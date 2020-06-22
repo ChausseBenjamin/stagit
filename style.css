@@ -1,7 +1,41 @@
+:root {
+	--diff-green: #181;
+	--diff-red: #e02;
+	--links: #00c;
+	--code-border: #d2d2d2;
+	--gray: #777;
+	--hover-bg: #eee;
+}
+
 body {
 	color: #000;
 	background-color: #fff;
 	font-family: monospace;
+	max-width: 900px;
+	margin: 8px auto;
+	padding: 5px;
+}
+
+#content {
+	max-width: 800px;
+	overflow-x: auto;
+	margin: auto;
+}
+
+#log, #index {
+	min-width: 600px;
+	overflow-x: auto;
+}
+
+pre {
+	overflow-x: auto;
+	border: 1px solid var(--code-border);
+	border-radius: 4px;
+	padding: 10px;
+}
+
+a {
+	color: var(--links);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -29,7 +63,7 @@ a.line {
 }
 
 #blob a {
-	color: #777;
+	color: var(--gray);
 }
 
 #blob a:hover {
@@ -55,7 +89,7 @@ table td {
 #index tr:hover td,
 #log tr:hover td,
 #files tr:hover td {
-	background-color: #eee;
+	background-color: var(--hover-bg);
 }
 
 #index tr td:nth-child(2),
@@ -70,12 +104,12 @@ td.num {
 }
 
 .desc {
-	color: #777;
+	color: var(--gray);
 }
 
 hr {
 	border: 0;
-	border-top: 1px solid #777;
+	border-top: 1px solid var(--gray);
 	height: 1px;
 }
 
@@ -83,20 +117,16 @@ pre {
 	font-family: monospace;
 }
 
-pre a.h {
-	color: #00a;
-}
-
 .A,
 span.i,
 pre a.i {
-	color: #070;
+	color: var(--diff-green);
 }
 
 .D,
 span.d,
 pre a.d {
-	color: #e00;
+	color: var(--diff-red);
 }
 
 pre a.h:hover,

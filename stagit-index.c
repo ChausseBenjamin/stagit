@@ -12,7 +12,7 @@ static git_repository *repo;
 
 static const char *relpath = "";
 
-static char description[255] = "Repositories";
+static char description[255] = "Oscar Benedito's Git repositories";
 static char *name = "";
 static char owner[255];
 
@@ -67,19 +67,15 @@ writeheader(FILE *fp)
 		"<html>\n<head>\n"
 		"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
 		"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-		"<title>", fp);
-	xmlencode(fp, description, strlen(description));
-	fprintf(fp, "</title>\n<link rel=\"icon\" type=\"image/png\" href=\"%sfavicon.ico\" />\n", relpath);
+		"<title>Git Repositories | Oscar Benedito</title>\n", fp);
+	fprintf(fp, "<link rel=\"icon\" type=\"image/png\" href=\"%sfavicon.ico\" />\n", relpath);
 	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"%sstyle.css\" />\n", relpath);
-	fputs("</head>\n<body>\n", fp);
-	fprintf(fp, "<table>\n<tr><td><img src=\"%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></td>\n"
-	        "<td><span class=\"desc\">", relpath);
+	fputs("</head>\n<body id=\"home\">\n<h1>", fp);
 	xmlencode(fp, description, strlen(description));
-	fputs("</span></td></tr><tr><td></td><td>\n"
-		"</td></tr>\n</table>\n<hr/>\n<div id=\"content\">\n"
-		"<table id=\"index\"><thead>\n"
-		"<tr><td><b>Name</b></td><td><b>Description</b></td><td><b>Owner</b></td>"
-		"<td><b>Last commit</b></td></tr>"
+	fputs("</h1>\n<div id=\"content\">\n"
+		"<h2 id=\"repositories\">Repositories</h2>\n"
+		"<div class=\"table-container\">\n<table id=\"index\"><thead>\n"
+		"<tr><td><b>Name</b></td><td><b>Description</b></td><td><b>Last commit</b></td></tr>"
 		"</thead><tbody>\n", fp);
 }
 
@@ -87,8 +83,7 @@ void
 writefooter(FILE *fp)
 {
 	fputs("</tbody>\n</table>\n</div>\n"
-		"<div id=\"contribute\">\n"
-		"<h1>Contribute</h1>\n"
+		"<h2 id=\"contribute\">Contribute</h2>\n"
 		"<p>The best way to contribute to my repositories is through e-mail, check out <a href=\"https://git-send-email.io\">git-send-email.io</a> if you don’t know how to do that. Send your patches to <a href=\"mailto:patches@oscarbenedito.com\">patches@oscarbenedito.com</a> and change the subject prefix to specify the repository you are sending the patch for. You can do that running the following command from the git repository:</p>\n"
 		"<pre><code>git config format.subjectPrefix \"PATCH &lt;name-of-repository&gt;\"</code></pre>\n"
 		"<p>You can also contribute on <a href=\"https://gitlab.com/oscarbenedito\">GitLab</a> or <a href=\"https://github.com/oscarbenedito\">GitHub</a> (all my public repositories should be on both platforms) doing pull requests.</p>\n"
@@ -130,8 +125,6 @@ writelog(FILE *fp)
 	xmlencode(fp, stripped_name, strlen(stripped_name));
 	fputs("</a></td><td>", fp);
 	xmlencode(fp, description, strlen(description));
-	fputs("</td><td>", fp);
-	xmlencode(fp, owner, strlen(owner));
 	fputs("</td><td>", fp);
 	if (author)
 		printtimeshort(fp, &(author->when));

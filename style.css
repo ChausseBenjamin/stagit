@@ -16,24 +16,15 @@ body {
 	padding: 5px;
 }
 
-#content {
+#content, .table-container {
 	max-width: 800px;
 	overflow-x: auto;
 	margin: auto;
 }
 
-#contribute {
-	max-width: 800px;
-	margin: auto;
-	margin-top: 2.5em;
-}
-
-#contribute h1 {
-	font-size: 1.25em;
-}
-
 #log, #index {
 	min-width: 600px;
+	width: 100%;
 	overflow-x: auto;
 }
 
@@ -46,6 +37,18 @@ pre {
 
 a {
 	color: var(--links);
+}
+
+#home h1 {
+	font-size: 1.5em;
+	text-align: center;
+	margin-top: 1em;
+}
+
+#home h2 {
+	font-size: 1.25em;
+	margin-top: 2.5em;
+	margin-bottom: 1em;
 }
 
 h1, h2, h3, h4, h5, h6 {

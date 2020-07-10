@@ -62,6 +62,8 @@ static char *licensefiles[] = { "HEAD:LICENSE", "HEAD:LICENSE.md", "HEAD:COPYING
 static char *license;
 static char *readmefiles[] = { "HEAD:README", "HEAD:README.md" };
 static char *readme;
+static char *contributefiles[] = { "HEAD:CONTRIBUTING", "HEAD:CONTRIBUTING.md" };
+static char *contribute;
 static long long nlogcommits = -1; /* < 0 indicates not used */
 
 /* cache */
@@ -385,6 +387,11 @@ writeheader(FILE *fp, const char *title)
 	if (license)
 		fprintf(fp, " | <a href=\"%sfile/%s.html\">LICENSE</a>",
 		        relpath, license);
+	if (contribute)
+		fprintf(fp, " | <a href=\"%sfile/%s.html\">Contribute</a>",
+		        relpath, contribute);
+	else
+		fprintf(fp, " | <a href=\"../%s#contribute\">Contribute</a>", relpath);
 	fputs("</td></tr></table>\n<hr/>\n<div id=\"content\">\n", fp);
 }
 
@@ -1160,6 +1167,14 @@ main(int argc, char *argv[])
 			cloneurl[0] = '\0';
 		cloneurl[strcspn(cloneurl, "\n")] = '\0';
 		fclose(fpread);
+	}
+
+	/* check CONTRIBUTING */
+	for (i = 0; i < sizeof(contributefiles) / sizeof(*contributefiles) && !contribute; i++) {
+		if (!git_revparse_single(&obj, repo, contributefiles[i]) &&
+		    git_object_type(obj) == GIT_OBJ_BLOB)
+			contribute = contributefiles[i] + strlen("HEAD:");
+		git_object_free(obj);
 	}
 
 	/* check LICENSE */

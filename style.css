@@ -22,6 +22,16 @@ body {
 	margin: auto;
 }
 
+#contribute {
+	max-width: 800px;
+	margin: auto;
+	margin-top: 2.5em;
+}
+
+#contribute h1 {
+	font-size: 1.25em;
+}
+
 #log, #index {
 	min-width: 600px;
 	overflow-x: auto;

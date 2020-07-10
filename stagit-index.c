@@ -86,7 +86,13 @@ writeheader(FILE *fp)
 void
 writefooter(FILE *fp)
 {
-	fputs("</tbody>\n</table>\n</div>\n</body>\n</html>\n", fp);
+	fputs("</tbody>\n</table>\n</div>\n"
+		"<div id=\"contribute\">\n"
+		"<h1>Contribute</h1>\n"
+		"<p>The best way to contribute to my repositories is through e-mail, check out <a href=\"https://git-send-email.io\">git-send-email.io</a> if you don’t know how to do that. Send your patches to <a href=\"mailto:patches@oscarbenedito.com\">patches@oscarbenedito.com</a> and change the subject prefix to specify the repository you are sending the patch for. You can do that running the following command from the git repository:</p>\n"
+		"<pre><code>git config format.subjectPrefix \"PATCH &lt;name-of-repository&gt;\"</code></pre>\n"
+		"<p>You can also contribute on <a href=\"https://gitlab.com/oscarbenedito\">GitLab</a> or <a href=\"https://github.com/oscarbenedito\">GitHub</a> (all my public repositories should be on both platforms) doing pull requests.</p>\n"
+		"</div>\n</body>\n</html>\n", fp);
 }
 
 int

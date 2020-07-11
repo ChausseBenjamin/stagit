@@ -50,6 +50,7 @@ for dir in "$reposdir/"*.git/; do
 
     # symlinks
     ln -sf log.html index.html
+    ln -sf "$reposdir/$r" ".git"
 
     echo "done"
 done

@@ -58,6 +58,7 @@ cd "${destdir}/${d}" || exit 1
 # make pages
 stagit -c "${cachefile}" "${reposdir}/${r}"
 ln -sf log.html index.html
+ln -sf "${dir}" .git
 
 # make index
 repos=""

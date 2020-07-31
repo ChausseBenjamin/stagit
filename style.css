@@ -28,7 +28,7 @@ body {
 	overflow-x: auto;
 }
 
-pre {
+pre:not(#about) {
 	overflow-x: auto;
 	border: 1px solid var(--code-border);
 	border-radius: 4px;
@@ -54,6 +54,14 @@ a {
 h1, h2, h3, h4, h5, h6 {
 	font-size: 1em;
 	margin: 0;
+}
+
+.md h1 {
+	font-size: 1.5em;
+}
+
+.md h2 {
+	font-size: 1.25em;
 }
 
 img, h1, h2 {
@@ -146,4 +154,15 @@ pre a.h:hover,
 pre a.i:hover,
 pre a.d:hover {
 	text-decoration: none;
+}
+
+.md table {
+	border-collapse: collapse;
+	margin: 1em 1em;
+	border: 1px solid var(--border);
+}
+.md table td,
+.md table th {
+	padding: 0.25em 1em;
+	border: 1px solid var(--border);
 }

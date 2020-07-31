@@ -49,7 +49,9 @@ for dir in "$reposdir/"*.git/; do
     stagit -c ".stagit-build-cache" "$reposdir/$r"
 
     # symlinks
-    ln -sf log.html index.html
+    [ -f "about.html" ] \
+        && ln -sf about.html index.html \
+        || ln -sf log.html index.html
     ln -sf "$reposdir/$r" ".git"
 
     echo "done"

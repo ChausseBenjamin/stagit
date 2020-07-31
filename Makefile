@@ -8,12 +8,12 @@ PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/man
 DOCPREFIX = ${PREFIX}/share/doc/${NAME}
 
-LIBGIT_INC = -I/usr/local/include
-LIBGIT_LIB = -L/usr/local/lib -lgit2
+LIB_INC = -I/usr/local/include
+LIB_LIB = -L/usr/local/lib -lgit2 -lmd4c-html
 
 # use system flags.
-STAGIT_CFLAGS = ${LIBGIT_INC} ${CFLAGS}
-STAGIT_LDFLAGS = ${LIBGIT_LIB} ${LDFLAGS}
+STAGIT_CFLAGS = ${LIB_INC} ${CFLAGS}
+STAGIT_LDFLAGS = ${LIB_LIB} ${LDFLAGS}
 STAGIT_CPPFLAGS = -D_XOPEN_SOURCE=700 -D_DEFAULT_SOURCE -D_BSD_SOURCE
 
 SRC = \

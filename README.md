@@ -1,9 +1,13 @@
 stagit
-------
+======
 
-static git page generator.
+Personal fork of static git page generator. It generates static HTML pages for a
+git repository.
 
-It generates static HTML pages for a git repository.
+This fork uses [md4c](https://github.com/mity/md4c) to convert the README
+markdown into HTML and then shows it in an about page for each repository, this
+adds a new dependency. On top of that, the assets have been changed, creating a
+personal theme. The scripts have also been changed to fit my needs.
 
 
 Usage
@@ -22,8 +26,8 @@ Make index file for repositories:
 Build and install
 -----------------
 
-$ make
-# make install
+	$ make
+	# make install
 
 
 Dependencies
@@ -33,7 +37,7 @@ Dependencies
 - libc (tested with OpenBSD, FreeBSD, NetBSD, Linux: glibc and musl).
 - libgit2 (v0.22+).
 - POSIX make (optional).
-- md4c (v0.4.4+) (https://github.com/mity/md4c).
+- [md4c](https://github.com/mity/md4c) (v0.4.4+).
 
 
 Documentation
@@ -49,19 +53,19 @@ It may be useful to build static binaries, for example to run in a chroot.
 
 It can be done like this at the time of writing (v0.24):
 
-cd libgit2-src
+	cd libgit2-src
 
-# change the options in the CMake file: CMakeLists.txt
-BUILD_SHARED_LIBS to OFF (static)
-CURL to OFF              (not needed)
-USE_SSH OFF              (not needed)
-THREADSAFE OFF           (not needed)
-USE_OPENSSL OFF          (not needed, use builtin)
+	# change the options in the CMake file: CMakeLists.txt
+	BUILD_SHARED_LIBS to OFF (static)
+	CURL to OFF              (not needed)
+	USE_SSH OFF              (not needed)
+	THREADSAFE OFF           (not needed)
+	USE_OPENSSL OFF          (not needed, use builtin)
 
-mkdir -p build && cd build
-cmake ../
-make
-make install
+	mkdir -p build && cd build
+	cmake ../
+	make
+	make install
 
 
 Extract owner field from git config
@@ -83,6 +87,7 @@ Script:
 
 Set clone url for a directory of repos
 --------------------------------------
+
 	#!/bin/sh
 	cd "$dir"
 	for i in *; do
@@ -93,11 +98,11 @@ Set clone url for a directory of repos
 Update files on git push
 ------------------------
 
-Using a post-receive hook the static files can be automatically updated.
-Keep in mind git push -f can change the history and the commits may need
-to be recreated. This is because stagit checks if a commit file already
-exists. It also has a cache (-c) option which can conflict with the new
-history. See stagit(1).
+Using a post-receive hook the static files can be automatically updated. Keep in
+mind git push -f can change the history and the commits may need to be
+recreated. This is because stagit checks if a commit file already exists. It
+also has a cache (-c) option which can conflict with the new history. See
+stagit(1).
 
 git post-receive hook (repo/.git/hooks/post-receive):
 
@@ -122,6 +127,7 @@ git post-receive hook (repo/.git/hooks/post-receive):
 
 Create .tar.gz archives by tag
 ------------------------------
+
 	#!/bin/sh
 	name="stagit"
 	mkdir -p archives
@@ -149,8 +155,8 @@ Features
 - Atom feed log (atom.xml).
 - Make index page for multiple repositories with stagit-index.
 - After generating the pages (relatively slow) serving the files is very fast,
-  simple and requires little resources (because the content is static), only
-  a HTTP file server is required.
+  simple and requires little resources (because the content is static), only a
+  HTTP file server is required.
 - Usable with text-browsers such as dillo, links, lynx and w3m.
 
 
@@ -158,8 +164,8 @@ Cons
 ----
 
 - Not suitable for large repositories (2000+ commits), because diffstats are
-  an expensive operation, the cache (-c flag) is a workaround for this in
-  some cases.
+  an expensive operation, the cache (-c flag) is a workaround for this in some
+  cases.
 - Not suitable for large repositories with many files, because all files are
   written for each execution of stagit. This is because stagit shows the lines
   of textfiles and there is no "cache" for file metadata (this would add more
@@ -167,15 +173,14 @@ Cons
 - Not suitable for repositories with many branches, a quite linear history is
   assumed (from HEAD).
 
-  In these cases it is better to just use cgit or possibly change stagit to
-  run as a CGI program.
+  In these cases it is better to just use cgit or possibly change stagit to run
+  as a CGI program.
 
-- Relatively slow to run the first time (about 3 seconds for sbase,
-  1500+ commits), incremental updates are faster.
-- Does not support some of the dynamic features cgit has, like:
+- Relatively slow to run the first time (about 3 seconds for sbase, 1500+
+  commits), incremental updates are faster.
+- Does not support some of the dynamic features cgit has (this is by design,
+  just use git locally), like:
   - Snapshot tarballs per commit.
   - File tree per commit.
   - History log of branches diverged from HEAD.
   - Stats (git shortlog -s).
-
-  This is by design, just use git locally.

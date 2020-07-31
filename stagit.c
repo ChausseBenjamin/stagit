@@ -360,22 +360,22 @@ writeheader(FILE *fp, const char *title)
 	fprintf(fp, "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"%s Atom Feed\" href=\"%satom.xml\" />\n",
 		name, relpath);
 	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"../%sstyle.css\" />\n", relpath);
-	fputs("</head>\n<body>\n<table><tr><td>", fp);
-	fprintf(fp, "<a href=\"../%s\"><img src=\"../%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></a>",
+	fputs("</head>\n<body>\n<div id=\"head\"><table><tr><td>", fp);
+	fprintf(fp, "<a class=\"logo\" href=\"../%s\"><img src=\"../%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></a>",
 	        relpath, relpath);
-	fputs("</td><td><h1>", fp);
+	fputs("</td><td><strong>", fp);
 	xmlencode(fp, strippedname, strlen(strippedname));
-	fputs("</h1><span class=\"desc\">", fp);
+	fputs("</strong><span class=\"desc\"> - ", fp);
 	xmlencode(fp, description, strlen(description));
-	fputs("</span></td></tr>", fp);
+	fputs("</span>\n", fp);
 	if (cloneurl[0]) {
-		fputs("<tr class=\"url\"><td></td><td>git clone <a href=\"", fp);
+		fputs("<p class=\"url\">git clone <a href=\"", fp);
 		xmlencode(fp, cloneurl, strlen(cloneurl));
 		fputs("\">", fp);
 		xmlencode(fp, cloneurl, strlen(cloneurl));
-		fputs("</a></td></tr>", fp);
+		fputs("</a></p>\n", fp);
 	}
-	fputs("<tr><td></td><td>\n", fp);
+	fputs("</td></tr></table>\n<p>", fp);
 	if (readme)
 		fprintf(fp, "<a href=\"%sabout.html\">About</a> | ", relpath);
 	fprintf(fp, "<a href=\"%slog.html\">Log</a> | ", relpath);
@@ -385,14 +385,12 @@ writeheader(FILE *fp, const char *title)
 		fprintf(fp, " | <a href=\"%sfile/%s.html\">Submodules</a>",
 		        relpath, submodules);
 	if (license)
-		fprintf(fp, " | <a href=\"%sfile/%s.html\">LICENSE</a>",
+		fprintf(fp, " | <a href=\"%sfile/%s.html\">License</a>",
 		        relpath, license);
 	if (contribute)
 		fprintf(fp, " | <a href=\"%sfile/%s.html\">Contribute</a>",
 		        relpath, contribute);
-	else
-		fprintf(fp, " | <a href=\"../%s#contribute\">Contribute</a>", relpath);
-	fputs("</td></tr></table>\n<hr/>\n<div id=\"content\">\n", fp);
+	fputs("</p>\n</div>\n<hr/>\n<div id=\"content\">\n", fp);
 }
 
 void

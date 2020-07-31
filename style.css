@@ -2,7 +2,7 @@
 	--diff-green: #181;
 	--diff-red: #e02;
 	--links: #00c;
-	--code-border: #d2d2d2;
+	--border: #d2d2d2;
 	--gray: #777;
 	--hover-bg: #eee;
 }
@@ -10,13 +10,22 @@
 body {
 	color: #000;
 	background-color: #fff;
-	font-family: monospace;
+	font-family: sans-serif;
 	max-width: 900px;
 	margin: 8px auto;
 	padding: 5px;
+	line-height: 1.5;
 }
 
-#content, .table-container {
+#branches,
+#tags,
+#index,
+#log,
+#files {
+	font-family: monospace;
+}
+
+#head, #content, .table-container {
 	max-width: 800px;
 	overflow-x: auto;
 	margin: auto;
@@ -30,13 +39,34 @@ body {
 
 pre:not(#about) {
 	overflow-x: auto;
-	border: 1px solid var(--code-border);
+	border: 1px solid var(--border);
 	border-radius: 4px;
 	padding: 10px;
 }
 
 a {
 	color: var(--links);
+}
+
+#head table {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+#head table td:first-child {
+	padding: 0 0.4em 0 0;
+}
+
+#head table td:last-child {
+	padding: 0 0 0 0.4em;
+}
+
+#head p {
+	margin: 0;
+}
+
+.url {
+	font-family: monospace;
 }
 
 #home h1 {

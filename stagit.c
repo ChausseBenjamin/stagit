@@ -49,6 +49,12 @@ struct commitinfo {
 	size_t ndeltas;
 };
 
+/* reference and associated data for sorting */
+struct referenceinfo {
+	struct git_reference *ref;
+	struct commitinfo *ci;
+};
+
 static git_repository *repo;
 
 static const char *relpath = "";
@@ -245,6 +251,104 @@ err:
 	return NULL;
 }
 
+int
+refs_cmp(const void *v1, const void *v2)
+{
+	struct referenceinfo *r1 = (struct referenceinfo *)v1;
+	struct referenceinfo *r2 = (struct referenceinfo *)v2;
+	time_t t1, t2;
+	int r;
+
+	if ((r = git_reference_is_tag(r1->ref) - git_reference_is_tag(r2->ref)))
+		return r;
+
+	t1 = r1->ci->author ? r1->ci->author->when.time : 0;
+	t2 = r2->ci->author ? r2->ci->author->when.time : 0;
+	if ((r = t1 > t2 ? -1 : (t1 == t2 ? 0 : 1)))
+		return r;
+
+	return strcmp(git_reference_shorthand(r1->ref),
+	              git_reference_shorthand(r2->ref));
+}
+
+int
+getrefs(struct referenceinfo **pris, size_t *prefcount)
+{
+	struct referenceinfo *ris = NULL;
+	struct commitinfo *ci = NULL;
+	git_reference_iterator *it = NULL;
+	const git_oid *id = NULL;
+	git_object *obj = NULL;
+	git_reference *dref = NULL, *r, *ref = NULL;
+	size_t i, refcount;
+
+	*pris = NULL;
+	*prefcount = 0;
+
+	if (git_reference_iterator_new(&it, repo))
+		return -1;
+
+	for (refcount = 0; !git_reference_next(&ref, it); ) {
+		if (!git_reference_is_branch(ref) && !git_reference_is_tag(ref)) {
+			git_reference_free(ref);
+			ref = NULL;
+			continue;
+		}
+
+		switch (git_reference_type(ref)) {
+		case GIT_REF_SYMBOLIC:
+			if (git_reference_resolve(&dref, ref))
+				goto err;
+			r = dref;
+			break;
+		case GIT_REF_OID:
+			r = ref;
+			break;
+		default:
+			continue;
+		}
+		if (!git_reference_target(r) ||
+		    git_reference_peel(&obj, r, GIT_OBJ_ANY))
+			goto err;
+		if (!(id = git_object_id(obj)))
+			goto err;
+		if (!(ci = commitinfo_getbyoid(id)))
+			break;
+
+		if (!(ris = reallocarray(ris, refcount + 1, sizeof(*ris))))
+			err(1, "realloc");
+		ris[refcount].ci = ci;
+		ris[refcount].ref = r;
+		refcount++;
+
+		git_object_free(obj);
+		obj = NULL;
+		git_reference_free(dref);
+		dref = NULL;
+	}
+	git_reference_iterator_free(it);
+
+	/* sort by type, date then shorthand name */
+	qsort(ris, refcount, sizeof(*ris), refs_cmp);
+
+	*pris = ris;
+	*prefcount = refcount;
+
+	return 0;
+
+err:
+	git_object_free(obj);
+	git_reference_free(dref);
+	commitinfo_free(ci);
+	for (i = 0; i < refcount; i++) {
+		commitinfo_free(ris[i].ci);
+		git_reference_free(ris[i].ref);
+	}
+	free(ris);
+
+	return -1;
+}
+
 FILE *
 efopen(const char *name, const char *flags)
 {
@@ -359,7 +463,9 @@ writeheader(FILE *fp, const char *title)
 	fprintf(fp, "</title>\n<link rel=\"icon\" type=\"image/svg+xml\" href=\"../%slogo.svg\"/>\n", relpath);
 	fprintf(fp, "<link rel=\"alternate icon\" href=\"../%sfavicon.ico\"/>\n", relpath);
 	fprintf(fp, "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"%s Atom Feed\" href=\"%satom.xml\" />\n",
-		name, relpath);
+	        name, relpath);
+	fprintf(fp, "<link rel=\"alternate\" type=\"application/atom+xml\" title=\"%s Atom Feed (tags)\" href=\"%stags.xml\" />\n",
+	        name, relpath);
 	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"../%sstyle.css\" />\n", relpath);
 	fputs("</head>\n<body>\n<div id=\"head\"><table><tr><td>", fp);
 	fprintf(fp, "<a class=\"logo\" href=\"../%s\"><img src=\"../%slogo.svg\" alt=\"\" width=\"32\" height=\"32\" /></a>",
@@ -681,7 +787,7 @@ err:
 }
 
 void
-printcommitatom(FILE *fp, struct commitinfo *ci)
+printcommitatom(FILE *fp, struct commitinfo *ci, const char *tag)
 {
 	fputs("<entry>\n", fp);
 
@@ -698,6 +804,11 @@ printcommitatom(FILE *fp, struct commitinfo *ci)
 	}
 	if (ci->summary) {
 		fputs("<title type=\"text\">", fp);
+		if (tag && tag[0]) {
+			fputs("[", fp);
+			xmlencode(fp, tag, strlen(tag));
+			fputs("] ", fp);
+		}
 		xmlencode(fp, ci->summary, strlen(ci->summary));
 		fputs("</title>\n", fp);
 	}
@@ -733,8 +844,10 @@ printcommitatom(FILE *fp, struct commitinfo *ci)
 }
 
 int
-writeatom(FILE *fp)
+writeatom(FILE *fp, int all)
 {
+	struct referenceinfo *ris = NULL;
+	size_t refcount = 0;
 	struct commitinfo *ci;
 	git_revwalk *w = NULL;
 	git_oid id;
@@ -747,17 +860,30 @@ writeatom(FILE *fp)
 	xmlencode(fp, description, strlen(description));
 	fputs("</subtitle>\n", fp);
 
-	git_revwalk_new(&w, repo);
-	git_revwalk_push_head(w);
-	git_revwalk_simplify_first_parent(w);
+	/* all commits or only tags? */
+	if (all) {
+		git_revwalk_new(&w, repo);
+		git_revwalk_push_head(w);
+		git_revwalk_simplify_first_parent(w);
+		for (i = 0; i < m && !git_revwalk_next(&id, w); i++) {
+			if (!(ci = commitinfo_getbyoid(&id)))
+				break;
+			printcommitatom(fp, ci, "");
+			commitinfo_free(ci);
+		}
+		git_revwalk_free(w);
+	} else if (getrefs(&ris, &refcount) != -1) {
+		/* references: tags */
+		for (i = 0; i < refcount; i++) {
+			if (git_reference_is_tag(ris[i].ref))
+				printcommitatom(fp, ris[i].ci,
+				                git_reference_shorthand(ris[i].ref));
 
-	for (i = 0; i < m && !git_revwalk_next(&id, w); i++) {
-		if (!(ci = commitinfo_getbyoid(&id)))
-			break;
-		printcommitatom(fp, ci);
-		commitinfo_free(ci);
+			commitinfo_free(ris[i].ci);
+			git_reference_free(ris[i].ref);
+		}
+		free(ris);
 	}
-	git_revwalk_free(w);
 
 	fputs("</feed>\n", fp);
 
@@ -853,7 +979,6 @@ int
 writefilestree(FILE *fp, git_tree *tree, const char *path)
 {
 	const git_tree_entry *entry = NULL;
-	git_submodule *module = NULL;
 	git_object *obj = NULL;
 	git_off_t filesize;
 	const char *entryname;
@@ -906,11 +1031,11 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 				fprintf(fp, "%juB", (uintmax_t)filesize);
 			fputs("</td></tr>\n", fp);
 			git_object_free(obj);
-		} else if (!git_submodule_lookup(&module, repo, entryname)) {
+		} else if (git_tree_entry_type(entry) == GIT_OBJ_COMMIT) {
+			/* commit object in tree is a submodule */
 			fprintf(fp, "<tr><td>m---------</td><td><a href=\"%sfile/.gitmodules.html\">",
 				relpath);
 			xmlencode(fp, entrypath, strlen(entrypath));
-			git_submodule_free(module);
 			fputs("</a></td><td class=\"num\" align=\"right\"></td></tr>\n", fp);
 		}
 	}
@@ -943,115 +1068,58 @@ writefiles(FILE *fp, const git_oid *id)
 }
 
 int
-refs_cmp(const void *v1, const void *v2)
-{
-	git_reference *r1 = (*(git_reference **)v1);
-	git_reference *r2 = (*(git_reference **)v2);
-	int r;
-
-	if ((r = git_reference_is_branch(r1) - git_reference_is_branch(r2)))
-		return r;
-
-	return strcmp(git_reference_shorthand(r1),
-	              git_reference_shorthand(r2));
-}
-
-int
 writerefs(FILE *fp)
 {
+	struct referenceinfo *ris = NULL;
 	struct commitinfo *ci;
-	const git_oid *id = NULL;
-	git_object *obj = NULL;
-	git_reference *dref = NULL, *r, *ref = NULL;
-	git_reference_iterator *it = NULL;
-	git_reference **refs = NULL;
 	size_t count, i, j, refcount;
 	const char *titles[] = { "Branches", "Tags" };
 	const char *ids[] = { "branches", "tags" };
-	const char *name;
+	const char *s;
 
-	if (git_reference_iterator_new(&it, repo))
+	if (getrefs(&ris, &refcount) == -1)
 		return -1;
 
-	for (refcount = 0; !git_reference_next(&ref, it); refcount++) {
-		if (!(refs = reallocarray(refs, refcount + 1, sizeof(git_reference *))))
-			err(1, "realloc");
-		refs[refcount] = ref;
-	}
-	git_reference_iterator_free(it);
-
-	/* sort by type then shorthand name */
-	qsort(refs, refcount, sizeof(git_reference *), refs_cmp);
-
-	for (j = 0; j < 2; j++) {
-		for (i = 0, count = 0; i < refcount; i++) {
-			if (!(git_reference_is_branch(refs[i]) && j == 0) &&
-			    !(git_reference_is_tag(refs[i]) && j == 1))
-				continue;
-
-			switch (git_reference_type(refs[i])) {
-			case GIT_REF_SYMBOLIC:
-				if (git_reference_resolve(&dref, refs[i]))
-					goto err;
-				r = dref;
-				break;
-			case GIT_REF_OID:
-				r = refs[i];
-				break;
-			default:
-				continue;
-			}
-			if (!git_reference_target(r) ||
-			    git_reference_peel(&obj, r, GIT_OBJ_ANY))
-				goto err;
-			if (!(id = git_object_id(obj)))
-				goto err;
-			if (!(ci = commitinfo_getbyoid(id)))
-				break;
-
-			/* print header if it has an entry (first). */
-			if (++count == 1) {
-				fprintf(fp, "<h2>%s</h2><table id=\"%s\">"
-			                "<thead>\n<tr><td><b>Name</b></td>"
-				        "<td><b>Last commit date</b></td>"
-				        "<td><b>Author</b></td>\n</tr>\n"
-				        "</thead><tbody>\n",
-				         titles[j], ids[j]);
-			}
-
-			relpath = "";
-			name = git_reference_shorthand(r);
-
-			fputs("<tr><td>", fp);
-			xmlencode(fp, name, strlen(name));
-			fputs("</td><td>", fp);
-			if (ci->author)
-				printtimeshort(fp, &(ci->author->when));
-			fputs("</td><td>", fp);
-			if (ci->author)
-				xmlencode(fp, ci->author->name, strlen(ci->author->name));
-			fputs("</td></tr>\n", fp);
-
-			relpath = "../";
-
-			commitinfo_free(ci);
-			git_object_free(obj);
-			obj = NULL;
-			git_reference_free(dref);
-			dref = NULL;
+	for (i = 0, j = 0, count = 0; i < refcount; i++) {
+		if (j == 0 && git_reference_is_tag(ris[i].ref)) {
+			if (count)
+				fputs("</tbody></table><br/>\n", fp);
+			count = 0;
+			j = 1;
 		}
-		/* table footer */
-		if (count)
-			fputs("</tbody></table><br/>", fp);
+
+		/* print header if it has an entry (first). */
+		if (++count == 1) {
+			fprintf(fp, "<h2>%s</h2><table id=\"%s\">"
+		                "<thead>\n<tr><td><b>Name</b></td>"
+			        "<td><b>Last commit date</b></td>"
+			        "<td><b>Author</b></td>\n</tr>\n"
+			        "</thead><tbody>\n",
+			         titles[j], ids[j]);
+		}
+
+		ci = ris[i].ci;
+		s = git_reference_shorthand(ris[i].ref);
+
+		fputs("<tr><td>", fp);
+		xmlencode(fp, s, strlen(s));
+		fputs("</td><td>", fp);
+		if (ci->author)
+			printtimeshort(fp, &(ci->author->when));
+		fputs("</td><td>", fp);
+		if (ci->author)
+			xmlencode(fp, ci->author->name, strlen(ci->author->name));
+		fputs("</td></tr>\n", fp);
 	}
+	/* table footer */
+	if (count)
+		fputs("</tbody></table><br/>\n", fp);
 
-err:
-	git_object_free(obj);
-	git_reference_free(dref);
-
-	for (i = 0; i < refcount; i++)
-		git_reference_free(refs[i]);
-	free(refs);
+	for (i = 0; i < refcount; i++) {
+		commitinfo_free(ris[i].ci);
+		git_reference_free(ris[i].ref);
+	}
+	free(ris);
 
 	return 0;
 }
@@ -1296,7 +1364,12 @@ main(int argc, char *argv[])
 
 	/* Atom feed */
 	fp = efopen("atom.xml", "w");
-	writeatom(fp);
+	writeatom(fp, 1);
+	fclose(fp);
+
+	/* Atom feed for tags / releases */
+	fp = efopen("tags.xml", "w");
+	writeatom(fp, 0);
 	fclose(fp);
 
 	/* rename new cache file on success */

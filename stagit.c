@@ -890,8 +890,32 @@ writeatom(FILE *fp, int all)
 	return 0;
 }
 
+void
+writeblobraw(const git_blob *blob, const char *fpath, const char *filename, git_off_t filesize)
+{
+	char tmp[PATH_MAX] = "", *d;
+	const char *p;
+	int lc = 0;
+	FILE *fp;
+
+	if (strlcpy(tmp, fpath, sizeof(tmp)) >= sizeof(tmp))
+		errx(1, "path truncated: '%s'", fpath);
+	if (!(d = dirname(tmp)))
+		err(1, "dirname");
+	mkdirp(d);
+
+	for (p = fpath, tmp[0] = '\0'; *p; p++) {
+		if (*p == '/' && strlcat(tmp, "../", sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "path truncated: '../%s'", tmp);
+	}
+
+	fp = efopen(fpath, "w");
+	fwrite(git_blob_rawcontent(blob), (size_t)git_blob_rawsize(blob), 1, fp);
+	fclose(fp);
+}
+
 int
-writeblob(git_object *obj, const char *fpath, const char *filename, git_off_t filesize)
+writeblob(git_object *obj, const char *fpath, const char *rpath, const char *filename, git_off_t filesize)
 {
 	char tmp[PATH_MAX] = "", *d;
 	const char *p;
@@ -916,7 +940,7 @@ writeblob(git_object *obj, const char *fpath, const char *filename, git_off_t fi
 	fputs("<p> ", fp);
 	xmlencode(fp, filename, strlen(filename));
 	fprintf(fp, " (%juB)", (uintmax_t)filesize);
-	fputs("</p><hr/>", fp);
+	fprintf(fp, " - <a href=\"%s%s\">raw</a></p><hr/>", relpath, rpath);
 
 	if (git_blob_is_binary((git_blob *)obj)) {
 		fputs("<p>Binary file.</p>\n", fp);
@@ -982,9 +1006,9 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 	git_object *obj = NULL;
 	git_off_t filesize;
 	const char *entryname;
-	char filepath[PATH_MAX], entrypath[PATH_MAX];
+	char filepath[PATH_MAX], rawpath[PATH_MAX], entrypath[PATH_MAX];
 	size_t count, i;
-	int lc, r, ret;
+	int lc, r, rf, ret;
 
 	count = git_tree_entrycount(tree);
 	for (i = 0; i < count; i++) {
@@ -997,6 +1021,10 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 		         entrypath);
 		if (r < 0 || (size_t)r >= sizeof(filepath))
 			errx(1, "path truncated: 'file/%s.html'", entrypath);
+		rf = snprintf(rawpath, sizeof(rawpath), "raw/%s",
+		         entrypath);
+		if (rf < 0 || (size_t)rf >= sizeof(rawpath))
+			errx(1, "path truncated: 'raw/%s'", entrypath);
 
 		if (!git_tree_entry_to_object(&obj, repo, entry)) {
 			switch (git_object_type(obj)) {
@@ -1016,7 +1044,8 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 			}
 
 			filesize = git_blob_rawsize((git_blob *)obj);
-			lc = writeblob(obj, filepath, entryname, filesize);
+			lc = writeblob(obj, filepath, rawpath, entryname, filesize);
+			writeblobraw((git_blob *)obj, rawpath, entryname, filesize);
 
 			fputs("<tr><td>", fp);
 			fputs(filemode(git_tree_entry_filemode(entry)), fp);
@@ -1283,7 +1312,7 @@ main(int argc, char *argv[])
 			fputs("<div class=\"md\">", fp);
 			if (md_html(s, len, process_output_md, fp, MD_FLAG_TABLES | MD_FLAG_TASKLISTS |
 			    MD_FLAG_PERMISSIVEEMAILAUTOLINKS | MD_FLAG_PERMISSIVEURLAUTOLINKS, 0))
-				fprintf(stderr, "Error parsing markdown\n");
+				err(1, "error parsing markdown");
 			fputs("</div>\n", fp);
 		} else {
 			fputs("<pre id=\"about\">", fp);

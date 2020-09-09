@@ -1065,7 +1065,12 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 			fprintf(fp, "<tr><td>m---------</td><td><a href=\"%sfile/.gitmodules.html\">",
 				relpath);
 			xmlencode(fp, entrypath, strlen(entrypath));
-			fputs("</a></td><td class=\"num\" align=\"right\"></td></tr>\n", fp);
+			fputs("</a> @ ", fp);
+			const git_oid* oid = git_tree_entry_id(entry);
+			char oidstr[8];
+			git_oid_tostr(oidstr, sizeof(oidstr), oid);
+			fprintf(fp, "%s</td><td class=\"num\" align=\"right\"></td></tr>\n",
+			        oidstr);
 		}
 	}
 

@@ -1382,6 +1382,7 @@ main(int argc, char *argv[])
 			xmlencode(fp, s, strlen(s));
 			fputs("</pre>\n", fp);
 		}
+		git_object_free(obj);
 		writefooter(fp);
 		fclose(fp);
 	}

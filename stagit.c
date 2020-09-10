@@ -398,6 +398,20 @@ mkdirp(const char *path)
 	return 0;
 }
 
+int
+mkdirfile(const char *path)
+{
+	char *d;
+	char tmp[PATH_MAX];
+	if (strlcpy(tmp, path, sizeof(tmp)) >= sizeof(tmp))
+		errx(1, "path truncated: '%s'", path);
+	if (!(d = dirname(tmp)))
+		err(1, "dirname");
+	if (mkdirp(d))
+		return -1;
+	return 0;
+}
+
 void
 printtimez(FILE *fp, const git_time *intime)
 {
@@ -893,16 +907,15 @@ writeatom(FILE *fp, int all)
 void
 writeblobraw(const git_blob *blob, const char *fpath, const char *filename, git_off_t filesize)
 {
-	char tmp[PATH_MAX] = "", *d;
+	char tmp[PATH_MAX] = "";
 	const char *p;
 	int lc = 0;
 	FILE *fp;
 
+	mkdirfile(fpath);
+
 	if (strlcpy(tmp, fpath, sizeof(tmp)) >= sizeof(tmp))
 		errx(1, "path truncated: '%s'", fpath);
-	if (!(d = dirname(tmp)))
-		err(1, "dirname");
-	mkdirp(d);
 
 	for (p = fpath, tmp[0] = '\0'; *p; p++) {
 		if (*p == '/' && strlcat(tmp, "../", sizeof(tmp)) >= sizeof(tmp))
@@ -917,22 +930,22 @@ writeblobraw(const git_blob *blob, const char *fpath, const char *filename, git_
 int
 writeblob(git_object *obj, const char *fpath, const char *rpath, const char *filename, git_off_t filesize)
 {
-	char tmp[PATH_MAX] = "", *d;
-	const char *p;
+	char tmp[PATH_MAX] = "";
+	const char *p, *oldrelpath;
 	int lc = 0;
 	FILE *fp;
 
+	mkdirfile(fpath);
+
 	if (strlcpy(tmp, fpath, sizeof(tmp)) >= sizeof(tmp))
 		errx(1, "path truncated: '%s'", fpath);
-	if (!(d = dirname(tmp)))
-		err(1, "dirname");
-	if (mkdirp(d))
-		return -1;
 
 	for (p = fpath, tmp[0] = '\0'; *p; p++) {
 		if (*p == '/' && strlcat(tmp, "../", sizeof(tmp)) >= sizeof(tmp))
 			errx(1, "path truncated: '../%s'", tmp);
 	}
+
+	oldrelpath = relpath;
 	relpath = tmp;
 
 	fp = efopen(fpath, "w");
@@ -952,7 +965,7 @@ writeblob(git_object *obj, const char *fpath, const char *rpath, const char *fil
 	writefooter(fp);
 	fclose(fp);
 
-	relpath = "";
+	relpath = oldrelpath;
 
 	return lc;
 }
@@ -1005,10 +1018,16 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 	const git_tree_entry *entry = NULL;
 	git_object *obj = NULL;
 	git_off_t filesize;
-	const char *entryname;
-	char filepath[PATH_MAX], rawpath[PATH_MAX], entrypath[PATH_MAX];
+	FILE *fp_subtree;
+	const char *entryname, *oldrelpath;
+	char filepath[PATH_MAX], rawpath[PATH_MAX], entrypath[PATH_MAX], tmp[PATH_MAX];
 	size_t count, i;
 	int lc, r, rf, ret;
+
+	fputs("<table id=\"files\"><thead>\n<tr>"
+			"<td><b>Mode</b></td><td><b>Name</b></td>"
+			"<td class=\"num\" align=\"right\"><b>Size</b></td>"
+			"</tr>\n</thead><tbody>\n", fp);
 
 	count = git_tree_entrycount(tree);
 	for (i = 0; i < count; i++) {
@@ -1029,34 +1048,47 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 		if (!git_tree_entry_to_object(&obj, repo, entry)) {
 			switch (git_object_type(obj)) {
 			case GIT_OBJ_BLOB:
+				filesize = git_blob_rawsize((git_blob *)obj);
+				lc = writeblob(obj, filepath, rawpath, entryname, filesize);
+				writeblobraw((git_blob *)obj, rawpath, entryname, filesize);
 				break;
 			case GIT_OBJ_TREE:
+				mkdirfile(filepath);
+
+				if (strlcpy(tmp, relpath, sizeof(tmp)) >= sizeof(tmp))
+					errx(1, "path truncated: '%s'", relpath);
+				if (strlcat(tmp, "../", sizeof(tmp)) >= sizeof(tmp))
+					errx(1, "path truncated: '../%s'", tmp);
+
+				oldrelpath = relpath;
+				relpath = tmp;
+				fp_subtree = efopen(filepath, "w");
+				writeheader(fp_subtree, "Files");
 				/* NOTE: recurses */
-				ret = writefilestree(fp, (git_tree *)obj,
+				ret = writefilestree(fp_subtree, (git_tree *)obj,
 				                     entrypath);
+				writefooter(fp_subtree);
+				relpath = oldrelpath;
 				git_object_free(obj);
+				lc = -1;
 				if (ret)
 					return ret;
-				continue;
+				break;
 			default:
 				git_object_free(obj);
 				continue;
 			}
-
-			filesize = git_blob_rawsize((git_blob *)obj);
-			lc = writeblob(obj, filepath, rawpath, entryname, filesize);
-			writeblobraw((git_blob *)obj, rawpath, entryname, filesize);
 
 			fputs("<tr><td>", fp);
 			fputs(filemode(git_tree_entry_filemode(entry)), fp);
 			fprintf(fp, "</td><td><a href=\"%s", relpath);
 			xmlencode(fp, filepath, strlen(filepath));
 			fputs("\">", fp);
-			xmlencode(fp, entrypath, strlen(entrypath));
+			xmlencode(fp, entryname, strlen(entryname));
 			fputs("</a></td><td class=\"num\" align=\"right\">", fp);
 			if (lc > 0)
 				fprintf(fp, "%dL", lc);
-			else
+			else if (lc == 0)
 				fprintf(fp, "%juB", (uintmax_t)filesize);
 			fputs("</td></tr>\n", fp);
 			git_object_free(obj);
@@ -1074,6 +1106,7 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 		}
 	}
 
+	fputs("</tbody></table>", fp);
 	return 0;
 }
 
@@ -1084,16 +1117,9 @@ writefiles(FILE *fp, const git_oid *id)
 	git_commit *commit = NULL;
 	int ret = -1;
 
-	fputs("<table id=\"files\"><thead>\n<tr>"
-	      "<td><b>Mode</b></td><td><b>Name</b></td>"
-	      "<td class=\"num\" align=\"right\"><b>Size</b></td>"
-	      "</tr>\n</thead><tbody>\n", fp);
-
 	if (!git_commit_lookup(&commit, repo, id) &&
 	    !git_commit_tree(&tree, commit))
 		ret = writefilestree(fp, tree, "");
-
-	fputs("</tbody></table>", fp);
 
 	git_commit_free(commit);
 	git_tree_free(tree);

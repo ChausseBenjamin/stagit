@@ -1020,14 +1020,40 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 	git_off_t filesize;
 	FILE *fp_subtree;
 	const char *entryname, *oldrelpath;
-	char filepath[PATH_MAX], rawpath[PATH_MAX], entrypath[PATH_MAX], tmp[PATH_MAX];
+	char filepath[PATH_MAX], rawpath[PATH_MAX], entrypath[PATH_MAX], tmp[PATH_MAX], tmp2[PATH_MAX];
+	char* parent;
 	size_t count, i;
 	int lc, r, rf, ret;
+
+	if (strlen(path) > 0) {
+		fputs("<h2>Directory: ", fp);
+		xmlencode(fp, path, strlen(path));
+		fputs("</h2>\n", fp);
+	}
 
 	fputs("<table id=\"files\"><thead>\n<tr>"
 			"<td><b>Mode</b></td><td><b>Name</b></td>"
 			"<td class=\"num\" align=\"right\"><b>Size</b></td>"
 			"</tr>\n</thead><tbody>\n", fp);
+
+	if (strlen(path) > 0) {
+		if (strlcpy(tmp, path, sizeof(tmp)) >= sizeof(tmp))
+			errx(1, "path truncated: '%s'", path);
+		parent = strrchr(tmp, '/');
+		if (parent == NULL)
+			parent = "files";
+		else {
+			*parent = '\0';
+			parent = strrchr(tmp, '/');
+			if (parent == NULL)
+				parent = tmp;
+			else
+				++parent;
+		}
+		fputs("<tr><td>d---------</td><td><a class=\"dir\" href=\"../", fp);
+		xmlencode(fp, parent, strlen(parent));
+		fputs(".html\">..</a></td><td class=\"num\" align=\"right\"></td></tr>\n", fp);
+	}
 
 	count = git_tree_entrycount(tree);
 	for (i = 0; i < count; i++) {
@@ -1063,7 +1089,10 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 				oldrelpath = relpath;
 				relpath = tmp;
 				fp_subtree = efopen(filepath, "w");
-				writeheader(fp_subtree, "Files");
+				strlcpy(tmp2, "Files - ", sizeof(tmp2));
+				if (strlcat(tmp2, entrypath, sizeof(tmp2)) >= sizeof(tmp2))
+					errx(1, "path truncated: '%s'", tmp2);
+				writeheader(fp_subtree, tmp2);
 				/* NOTE: recurses */
 				ret = writefilestree(fp_subtree, (git_tree *)obj,
 				                     entrypath);
@@ -1081,7 +1110,10 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 
 			fputs("<tr><td>", fp);
 			fputs(filemode(git_tree_entry_filemode(entry)), fp);
-			fprintf(fp, "</td><td><a href=\"%s", relpath);
+			fputs("</td><td><a ", fp);
+			if (git_object_type(obj) == GIT_OBJ_TREE)
+				fputs("class=\"dir\" ", fp);
+			fprintf(fp, "href=\"%s", relpath);
 			xmlencode(fp, filepath, strlen(filepath));
 			fputs("\">", fp);
 			xmlencode(fp, entryname, strlen(entryname));

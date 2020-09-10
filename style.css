@@ -65,6 +65,11 @@ a {
 	margin: 0;
 }
 
+#files .dir {
+	font-weight: bold;
+	text-decoration: none;
+}
+
 .url {
 	font-family: monospace;
 }

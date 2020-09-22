@@ -1098,7 +1098,6 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
 				                     entrypath);
 				writefooter(fp_subtree);
 				relpath = oldrelpath;
-				git_object_free(obj);
 				lc = -1;
 				if (ret)
 					return ret;

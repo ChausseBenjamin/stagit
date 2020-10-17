@@ -89,7 +89,7 @@ writefooter(FILE *fp)
 		"<h2 id=\"contribute\">Contribute</h2>\n"
 		"<p>The best way to contribute to my repositories is to contact me through email at <a href=\"mailto:benjamin@chausse.xyz\">benjamin@chausse.xyz</a>.</p>\n"
 		"<pre><code>git config format.subjectPrefix \"PATCH &lt;name-of-repository&gt;\"</code></pre>\n"
-		"<p>You can also contribute on <a href=\"https://github.com/ChausseBenjamin\">Github</a> if you prefer.</p>\n"
+		"<p>You submit a pull request on <a href=\"https://github.com/ChausseBenjamin\">Github</a> if you prefer.</p>\n"
 		"</div>\n</body>\n</html>\n", fp);
 }
 
@@ -124,10 +124,12 @@ writelog(FILE *fp)
 
 	fputs("<tr><td><a href=\"", fp);
 	xmlencode(fp, stripped_name, strlen(stripped_name));
-	fputs("/\">", fp);
+	fputs("/log.html\">", fp);
 	xmlencode(fp, stripped_name, strlen(stripped_name));
 	fputs("</a></td><td>", fp);
 	xmlencode(fp, description, strlen(description));
+	fputs("</td><td>", fp);
+	xmlencode(fp, owner, strlen(owner));
 	fputs("</td><td>", fp);
 	if (author)
 		printtimeshort(fp, &(author->when));

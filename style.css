@@ -25,6 +25,10 @@ h1, h2, h3, h4, h5, h6 {
 	margin: 0;
 }
 
+h2#contribute {
+	padding-top: 12px;
+}
+
 img, h1, h2 {
 	vertical-align: middle;
 }
@@ -62,6 +66,7 @@ table thead td {
 
 table td {
 	padding: 0 0.4em;
+	max-width: 70%;
 }
 
 #content table td {

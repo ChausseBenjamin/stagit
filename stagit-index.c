@@ -12,8 +12,8 @@ static git_repository *repo;
 
 static const char *relpath = "";
 
-static char description[255] = "Chausse Benjamin";
-static char *name = "test";
+static char description[255] = "Repositories";
+static char *name = "Benjamin Chausse";
 static char owner[255];
 
 void
@@ -66,16 +66,19 @@ writeheader(FILE *fp)
 	fputs("<!DOCTYPE html>\n"
 		"<html>\n<head>\n"
 		"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
-		"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-		"<title>Git Repositories | Oscar Benedito</title>\n", fp);
-	fprintf(fp, "<link rel=\"icon\" type=\"image/png\" href=\"%sfavicon.png\" />\n", relpath);
-	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"%sstyle.css\" />\n", relpath);
-	fputs("</head>\n<body id=\"home\">\n<h1>", fp);
+		"<title>", fp);
 	xmlencode(fp, description, strlen(description));
-	fputs("</h1>\n<div id=\"content\">\n"
-		"<h2 id=\"repositories\">Repositories</h2>\n"
-		"<div class=\"table-container\">\n<table id=\"index\"><thead>\n"
-		"<tr><td><b>Name</b></td><td><b>Description</b></td><td><b>Last commit</b></td></tr>"
+	fprintf(fp, "</title>\n<link rel=\"icon\" type=\"image/png\" href=\"%sfavicon.png\" />\n", relpath);
+	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"%sstyle.css\" />\n", relpath);
+	fputs("</head>\n<body>\n", fp);
+	fprintf(fp, "<table>\n<tr><td><img src=\"%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></td>\n"
+	        "<td><span class=\"desc\">", relpath);
+	xmlencode(fp, description, strlen(description));
+	fputs("</span></td></tr><tr><td></td><td>\n"
+		"</td></tr>\n</table>\n<hr/>\n<div id=\"content\">\n"
+		"<table id=\"index\"><thead>\n"
+		"<tr><td><b>Name</b></td><td><b>Description</b></td><td><b>Owner</b></td>"
+		"<td><b>Last commit</b></td></tr>"
 		"</thead><tbody>\n", fp);
 }
 

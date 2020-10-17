@@ -1,102 +1,28 @@
-:root {
-	--diff-green: #181;
-	--diff-red: #e02;
-	--links: #00c;
-	--border: #d2d2d2;
-	--gray: #777;
-	--hover-bg: #eee;
+@font-face {
+	font-family: 'Fontin';
+	src: url('./fonts/Fontin-Regular.woff') format('woff'),
+	  url('./fonts/Fontin-Regular.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Fira Code';
+	src: url('./fonts/FiraCode-Regular.woff') format('woff'),
+	  url('./fonts/FiraCode-Regular.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
 }
 
 body {
-	color: #000;
-	background-color: #fff;
-	font-family: sans-serif;
-	max-width: 800px;
-	margin: 8px auto;
-	padding: 5px;
-	line-height: 1.5;
-}
-
-#branches,
-#tags,
-#index,
-#log,
-#files {
-	font-family: monospace;
-}
-
-#head, #content, .table-container {
-	max-width: 800px;
-	overflow-x: auto;
-	margin: auto;
-}
-
-#log, #index {
-	min-width: 600px;
-	width: 100%;
-	overflow-x: auto;
-}
-
-pre:not(#about) {
-	overflow-x: auto;
-	border: 1px solid var(--border);
-	border-radius: 4px;
-	padding: 10px;
-}
-
-a {
-	color: var(--links);
-}
-
-#head table {
-	margin-top: 0.5em;
-	margin-bottom: 0.5em;
-}
-
-#head table td:first-child {
-	padding: 0 0.4em 0 0;
-}
-
-#head table td:last-child {
-	padding: 0 0 0 0.4em;
-}
-
-#head p {
-	margin: 0;
-}
-
-#files .dir {
-	font-weight: bold;
-	text-decoration: none;
-}
-
-.url {
-	font-family: monospace;
-}
-
-#home h1 {
-	font-size: 1.5em;
-	text-align: center;
-	margin-top: 1em;
-}
-
-#home h2 {
-	font-size: 1.25em;
-	margin-top: 2.5em;
-	margin-bottom: 1em;
+	color: #eee;
+	background-color: #222d32;
+	font-family: 'Fontin', serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
 	font-size: 1em;
 	margin: 0;
-}
-
-.md h1 {
-	font-size: 1.5em;
-}
-
-.md h2 {
-	font-size: 1.25em;
 }
 
 img, h1, h2 {
@@ -107,8 +33,11 @@ img {
 	border: 0;
 }
 
-a:target {
-	background-color: #ccc;
+a {
+	color: #66aabb;
+}
+a:hover {
+	color: #eadab1
 }
 
 a.d,
@@ -119,11 +48,11 @@ a.line {
 }
 
 #blob a {
-	color: var(--gray);
+	color: #777;
 }
 
 #blob a:hover {
-	color: blue;
+	color: #ff0;
 	text-decoration: none;
 }
 
@@ -145,7 +74,7 @@ table td {
 #index tr:hover td,
 #log tr:hover td,
 #files tr:hover td {
-	background-color: var(--hover-bg);
+	background-color: #111;
 }
 
 #index tr td:nth-child(2),
@@ -160,29 +89,36 @@ td.num {
 }
 
 .desc {
-	color: var(--gray);
+	color: #eee;
+	font-weight: bold;
+	font-size: 1.5em;
 }
 
 hr {
 	border: 0;
-	border-top: 1px solid var(--gray);
+	border-top: 1px solid #777;
 	height: 1px;
 }
 
-pre {
-	font-family: monospace;
+pre, tr.url {
+	font-family: 'Fira Code', 'Monospace', monospace;
+	font-size: 12px;
+}
+
+pre a.h {
+	color: lightblue;
 }
 
 .A,
 span.i,
 pre a.i {
-	color: var(--diff-green);
+	color: lightgreen;
 }
 
 .D,
 span.d,
 pre a.d {
-	color: var(--diff-red);
+	color: lightcoral;
 }
 
 pre a.h:hover,
@@ -191,13 +127,6 @@ pre a.d:hover {
 	text-decoration: none;
 }
 
-.md table {
-	border-collapse: collapse;
-	margin: 1em 1em;
-	border: 1px solid var(--border);
-}
-.md table td,
-.md table th {
-	padding: 0.25em 1em;
-	border: 1px solid var(--border);
+table#index td:nth-child(3) {
+	display: none;
 }

@@ -3,7 +3,7 @@
 # - Makes static pages for each repository directory.
 #
 # NOTE, things to do manually (once) before running this script:
-# - copy style.css, logo.svg and favicon.ico manually, a style.css example
+# - copy style.css, logo.png and favicon.png manually, a style.css example
 #   is included.
 #
 # - write clone url, for example "git://git.codemadness.org/dir" to the "url"
@@ -24,8 +24,8 @@ mkdir -p "$webdir" || exit 1
 
 # set assets if not already there
 ln -s "$defaultdir/style.css" "$webdir/style.css" 2> /dev/null
-ln -s "$defaultdir/logo.svg" "$webdir/logo.svg" 2> /dev/null
-ln -s "$defaultdir/favicon.ico" "$webdir/favicon.ico" 2> /dev/null
+ln -s "$defaultdir/logo.png" "$webdir/logo.png" 2> /dev/null
+ln -s "$defaultdir/favicon.png" "$webdir/favicon.png" 2> /dev/null
 
 # clean
 for dir in "$webdir/"*/; do

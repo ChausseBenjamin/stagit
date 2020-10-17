@@ -12,8 +12,8 @@ static git_repository *repo;
 
 static const char *relpath = "";
 
-static char description[255] = "Oscar Benedito's Git repositories";
-static char *name = "";
+static char description[255] = "Chausse Benjamin";
+static char *name = "test";
 static char owner[255];
 
 void
@@ -84,9 +84,9 @@ writefooter(FILE *fp)
 {
 	fputs("</tbody>\n</table>\n</div>\n"
 		"<h2 id=\"contribute\">Contribute</h2>\n"
-		"<p>The best way to contribute to my repositories is through e-mail, check out <a href=\"https://git-send-email.io\">git-send-email.io</a> if you don’t know how to do that. Send your patches to <a href=\"mailto:patches@oscarbenedito.com\">patches@oscarbenedito.com</a> and change the subject prefix to specify the repository you are sending the patch for. You can do that running the following command from the git repository:</p>\n"
+		"<p>The best way to contribute to my repositories is to contact me through email at <a href=\"mailto:benjamin@chausse.xyz\">benjamin@chausse.xyz</a>.</p>\n"
 		"<pre><code>git config format.subjectPrefix \"PATCH &lt;name-of-repository&gt;\"</code></pre>\n"
-		"<p>You can also contribute on <a href=\"https://gitlab.com/oscarbenedito\">GitLab</a> or <a href=\"https://github.com/oscarbenedito\">GitHub</a> (all my public repositories should be on both platforms) doing pull requests.</p>\n"
+		"<p>You can also contribute on <a href=\"https://github.com/ChausseBenjamin\">Github</a> if you prefer.</p>\n"
 		"</div>\n</body>\n</html>\n", fp);
 }
 

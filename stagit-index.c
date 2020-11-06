@@ -88,6 +88,7 @@ writefooter(FILE *fp)
 	fputs("</tbody>\n</table>\n</div>\n"
 		"<h2 id=\"contribute\">Contribute</h2>\n"
 		"<p>The best way to contribute to my repositories is to contact me through email at <a href=\"mailto:benjamin@chausse.xyz\">benjamin@chausse.xyz</a>.</p>\n"
+		"<p>You can have a copy of my public gpg key <a href='https://chausse.xyz/library/chaussebenjamin.gpg'>here</a>.</p>\n"
 		"<p>You can also submit a pull request on <a href=\"https://github.com/ChausseBenjamin\">Github</a> if you prefer.</p>\n"
 		"</div>\n</body>\n</html>\n", fp);
 }

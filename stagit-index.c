@@ -72,15 +72,18 @@ writeheader(FILE *fp)
 	fprintf(fp, "<link rel=\"stylesheet\" type=\"text/css\" href=\"%sstyle.css\" />\n", relpath);
 	fputs("</head>\n<body>\n", fp);
 	fprintf(fp, "<table>\n<tr><td><a href='https://chausse.xyz'><img src=\"%slogo.png\" alt=\"\" width=\"32\" height=\"32\" /></a></td>\n"
-	        "<td><span class=\"desc\">", relpath);
+	        "<td><strong>", relpath);
 	xmlencode(fp, description, strlen(description));
-	fputs("</span></td></tr><tr><td></td><td>\n"
+	fputs("</strong></td></tr><tr><td></td><td>\n"
 		"</td></tr>\n</table>\n<hr/>\n<div id=\"content\">\n"
 		"<table id=\"index\"><thead>\n"
 		"<tr><td><b>Name</b></td><td><b>Description</b></td><td><b>Owner</b></td>"
 		"<td><b>Last commit</b></td></tr>"
 		"</thead><tbody>\n", fp);
 }
+	        /* "<td><span class=\"desc\">", relpath); */
+	/* xmlencode(fp, description, strlen(description)); */
+	/* fputs("</span></td></tr><tr><td></td><td>\n" */
 
 void
 writefooter(FILE *fp)

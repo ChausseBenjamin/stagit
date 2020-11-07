@@ -81,9 +81,6 @@ writeheader(FILE *fp)
 		"<td><b>Last commit</b></td></tr>"
 		"</thead><tbody>\n", fp);
 }
-	        /* "<td><span class=\"desc\">", relpath); */
-	/* xmlencode(fp, description, strlen(description)); */
-	/* fputs("</span></td></tr><tr><td></td><td>\n" */
 
 void
 writefooter(FILE *fp)
